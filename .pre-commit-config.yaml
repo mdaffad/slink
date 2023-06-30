@@ -1,0 +1,7 @@
+repos:
+  - repo: local
+    hooks:
+    - id: pants-lint
+      name: pants lint
+      entry: bash -c 'pants lint ::'
+      language: system

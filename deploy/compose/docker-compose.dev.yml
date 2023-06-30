@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:13.7
+    environment:
+      - POSTGRES_DB=app
+      - POSTGRES_USER=postgre
+      - POSTGRES_PASSWORD=postgre
+    ports:
+      - "5432:5432"
