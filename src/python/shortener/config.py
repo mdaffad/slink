@@ -1,3 +1,4 @@
+import json
 from typing import List, Optional, Union
 
 from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, validator
@@ -32,8 +33,8 @@ class Settings(BaseSettings):
 
     @validator("log_level")
     def validate_log_level(cls, level: str, values: dict[str, str]):
-        print("Here what you get")
-        print(values)
+        pretty = json.dumps(values, indent=4)
+        print(pretty)
         return level.upper()
 
     # VALIDATORS
