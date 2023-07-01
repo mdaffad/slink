@@ -14,5 +14,4 @@ pex_binary(
 pex_binary(
     name="migrate",
     entry_point="entrypoints/migrate.py",
-    dependencies=["src/python/shortener/migration/alembic/env.py"],
 )
