@@ -1,6 +1,6 @@
 import logging
 
-from shortener.domain.models import ShortLink, User
+from shortener.domains.models import ShortLink, User
 from sqlalchemy import Boolean, Column, ForeignKey, String, Table
 from sqlalchemy.orm import registry, relationship
 

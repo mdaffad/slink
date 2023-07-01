@@ -2,7 +2,7 @@ from typing import Set
 from uuid import uuid4
 
 from pytest import fixture
-from shortener.domain.models import ShortLink, User
+from shortener.domains.models import ShortLink, User
 
 
 def test_source_empty():

@@ -2,7 +2,7 @@ import asyncio
 
 from alembic import context
 from shortener.adapters.orm import metadata
-from shortener.config import DEFAULT_SQLALCHEMY_DATABASE_URI
+from shortener.config import settings
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -32,7 +32,7 @@ target_metadata = metadata
 
 
 def get_database_uri():
-    return DEFAULT_SQLALCHEMY_DATABASE_URI
+    return settings.SQLALCHEMY_DATABASE_URI
 
 
 def run_migrations_offline():

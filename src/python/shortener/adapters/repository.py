@@ -1,7 +1,7 @@
 from typing import Generic, Optional, TypeVar
 
 from shortener.adapters.orm import short_links
-from shortener.domain.models import ShortLink, User
+from shortener.domains.models import ShortLink, User
 from sqlalchemy.ext.asyncio import AsyncSession
 
 Model = TypeVar("Model")

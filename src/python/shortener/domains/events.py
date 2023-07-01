@@ -1,14 +1,17 @@
+from pydantic import AnyUrl
 from pydantic.dataclasses import dataclass
 
 
 @dataclass
 class ShortLinkCreated:
-    pass
+    source: str
+    destination: AnyUrl
 
 
 @dataclass
 class ShortLinkUpdated:
-    pass
+    source: str
+    destination: AnyUrl
 
 
 @dataclass

@@ -1,39 +1,38 @@
 import json
 from typing import List, Optional, Union
 
-from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, validator
-
-DEFAULT_SQLALCHEMY_DATABASE_URI = PostgresDsn.build(
-    scheme="postgresql+asyncpg",
-    user="postgre",
-    password="postgre",
-    host="localhost",
-    port="5432",
-    path="/app",
-)
+from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, SecretStr, validator
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "less"
+    PROJECT_NAME: str = "shortener"
 
     # POSTGRESQL DEFAULT DATABASE
-    DEFAULT_DATABASE_SCHEME: str = "postgresql+asyncpg"
-    DEFAULT_DATABASE_HOSTNAME: str = "localhost"
-    DEFAULT_DATABASE_USER: str = "postgre"
-    DEFAULT_DATABASE_PASSWORD: str = "postgre"
-    DEFAULT_DATABASE_PORT: str = "5432"
-    DEFAULT_DATABASE_DB: str = "app"
-    DEFAULT_SQLALCHEMY_DATABASE_URI: str = ""
+    DATABASE_SCHEME: str = "postgresql+asyncpg"
+    DATABASE_HOSTNAME: str = "localhost"
+    DATABASE_USER: str = "postgre"
+    DATABASE_PASSWORD: str = "postgre"
+    DATABASE_PORT: str = "5432"
+    DATABASE_DB: str = "app"
+    SQLALCHEMY_DATABASE_URI: str = ""
 
     # CORE SETTINGS
     BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
     ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1"]
 
-    log_level: str = "DEBUG"
+    # BASIC AUTH SETTINGS
+    BASIC_AUTH_USERNAME: SecretStr = "admin"
+    BASIC_AUTH_PASSWORD: SecretStr = "admin123"
 
-    @validator("log_level")
+    LOG_LEVEL: str = "DEBUG"
+
+    class Config:
+        env_prefix = "SHORTENER_"
+
+    @validator("LOG_LEVEL")
     def validate_log_level(cls, level: str, values: dict[str, str]):
-        pretty = json.dumps(values, indent=4)
+        SecretStr.get_secret_value
+        pretty = json.dumps(values, indent=4, default=lambda obj: obj.__str__())
         print(pretty)
         return level.upper()
 
@@ -44,17 +43,15 @@ class Settings(BaseSettings):
             return [item.strip() for item in cors_origins.split(",")]
         return cors_origins
 
-    @validator("DEFAULT_SQLALCHEMY_DATABASE_URI")
-    def _assemble_default_db_connection(
-        cls, v: str, values: dict[str, Optional[str]]
-    ) -> str:
+    @validator("SQLALCHEMY_DATABASE_URI")
+    def _assemble_db_connection(cls, _: str, values: dict[str, Optional[str]]) -> str:
         return PostgresDsn.build(
             scheme="postgresql+asyncpg",
-            user=values["DEFAULT_DATABASE_USER"],
-            password=values["DEFAULT_DATABASE_PASSWORD"],
-            host=values["DEFAULT_DATABASE_HOSTNAME"],
-            port=values["DEFAULT_DATABASE_PORT"],
-            path=f"/{values['DEFAULT_DATABASE_DB']}",
+            user=values["DATABASE_USER"],
+            password=values["DATABASE_PASSWORD"],
+            host=values["DATABASE_HOSTNAME"],
+            port=values["DATABASE_PORT"],
+            path=f"/{values['DATABASE_DB']}",
         )
 
 
