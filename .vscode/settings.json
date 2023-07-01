@@ -1,0 +1,7 @@
+{
+    "rust-analyzer.linkedProjects": ["./src/rust/sentinel/Cargo.toml"],
+    "python.defaultInterpreterPath": "./dist/export/python/virtualenvs/python-default/3.9.16/bin/python",
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "./src/python:$PYTHONPATH"
+    }
+}
