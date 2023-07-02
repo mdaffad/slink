@@ -4,19 +4,7 @@ import json
 
 from aiokafka import AIOKafkaProducer
 from pydantic import AnyUrl
-
-# async def produce():
-#     producer = AIOKafkaProducer(
-#         bootstrap_servers='localhost:9092',
-#         value_serializer=serializer,
-#         compression_type="gzip")
-
-#     await producer.start()
-#     data = {"a": 123.4, "b": "some string"}
-#     await producer.send('foobar', data)
-#     data = [1,2,3,4]
-#     await producer.send('foobar', data)
-#     await producer.stop()
+from shortener.domains.models import ShortLink
 
 
 class Publisher:
@@ -30,21 +18,34 @@ class Publisher:
             value_serializer=self.serializer,
             compression_type=self.compression_type,
         )
+        await self.producer.start()
+        return self
 
     def serializer(self, value):
         return json.dumps(value).encode()
 
-    def update_cache() -> None:
+    def update_cache(self, short_link: ShortLink) -> None:
         # TODO: update dest link on cache
-        return
+        self.producer.send(
+            topic="UPDATE-CACHE",
+            value={
+                "source": short_link.source,
+                "destination": short_link.destination,
+                "is_private": short_link.is_private,
+            },
+        )
 
-    def invalidate_cache() -> None:
+    def invalidate_cache(self, short_link: ShortLink) -> None:
         # TODO: invalidate removed short link on cache
-        return
+        self.producer.send(
+            topic="INVALIDATE-CACHE",
+            value={
+                "source": short_link.source,
+            },
+        )
 
     async def __aenter__(self):
-        self.start_repository_session()
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
-        await self.session.close()
+        pass
