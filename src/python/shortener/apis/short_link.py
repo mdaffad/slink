@@ -17,11 +17,11 @@ async def read_short_links(
 ):
     async with CreateUOW(session) as uow:
         uow: UnitOfWork
-        user: Optional[User] = await uow.users.get(id=user_id)
+        user: Optional[User] = await uow.short_links.get_user(user_id)
         if not user:
             raise HTTPException(404, "Not found")
 
-        short_link = await uow.short_links.get(id=id)
+        short_link = await uow.short_links.get(id)
         if not user.has_short_link(short_link):
             return None
 
@@ -34,15 +34,22 @@ async def create_short_links(
 ):
     async with CreateUOW(session) as uow:
         uow: UnitOfWork
-        user: Optional[User] = await uow.users.get(id=short_link_cmd.user_id)
+        user: Optional[User] = await uow.short_links.get_user(short_link_cmd.user_id)
         if not user:
             raise HTTPException(404, "Not found")
 
         short_link = ShortLink(
             source=short_link_cmd.source, destination=short_link_cmd.destination
         )
+        uow.add(short_link)
         if not short_link.is_valid():
-            pass
+            raise HTTPException(400, "Bad request for short link creation")
+
+        if user.has_short_link(short_link):
+            raise HTTPException(
+                422, f"Duplicate short link with source={short_link.source}"
+            )
 
         user.register_short_link(short_link)
         await uow.commit()
+        return short_link_cmd

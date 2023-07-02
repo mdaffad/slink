@@ -1,24 +1,27 @@
-from typing import Generic, Optional, TypeVar
+from abc import ABC, abstractmethod
+from typing import Any, Optional
 
 from shortener.adapters.orm import short_links
 from shortener.domains.models import ShortLink, User
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-Model = TypeVar("Model")
 
-
-class BaseRepository(Generic[Model]):
+class BaseRepository(ABC):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def get(self, **kwargs) -> Optional[Model]:
-        return self.session.query(Model).filter_by(**kwargs).first()
-
-    async def add(self, item: Model):
-        await self.session.add(item)
+    @abstractmethod
+    def get(self, id) -> Any:
+        pass
 
 
-class UserRepository(BaseRepository[User]):
+class UserRepository(BaseRepository):
+    async def get(self, id) -> Optional[User]:
+        statement = select(User).where(User.id == id)
+        return await self.session.scalar(statement)
+
     async def get_by_short_link(self, short_link: ShortLink):
         return (
             self.session.query(User)
@@ -30,5 +33,15 @@ class UserRepository(BaseRepository[User]):
         )
 
 
-class ShortLinkRepository(BaseRepository[ShortLink]):
-    pass
+class ShortLinkRepository(BaseRepository):
+    async def get(self, source) -> Optional[ShortLink]:
+        statement = select(ShortLink).where(ShortLink.source == source)
+        return await self.session.scalar(statement)
+
+    async def get_user(self, user_id) -> Optional[User]:
+        statement = (
+            select(User)
+            .where(User.id == user_id)
+            .options(selectinload(User._short_links))
+        )
+        return await self.session.scalar(statement)
