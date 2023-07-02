@@ -2,7 +2,11 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from shortener.domains.models import ShortLink, User
-from shortener.domains.schemas import CreateShortLink
+from shortener.domains.schemas import (
+    CreateShortLink,
+    ListOfShortLinkResponse,
+    ShortLinkResponse,
+)
 from shortener.services.unit_of_work import CreateUOW, UnitOfWork
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,8 +15,8 @@ from .dependencies import get_session
 router = APIRouter()
 
 
-@router.get("/{id}")
-async def read_short_links(
+@router.get("/{user_id}/{id}")
+async def get_short_link(
     id: str, user_id: str, session: AsyncSession = Depends(get_session)
 ):
     async with CreateUOW(session) as uow:
@@ -28,6 +32,23 @@ async def read_short_links(
         return short_link
 
 
+@router.get("/{user_id}")
+async def get_short_links(user_id: str, session: AsyncSession = Depends(get_session)):
+    async with CreateUOW(session) as uow:
+        uow: UnitOfWork
+        user: Optional[User] = await uow.short_links.get_user(user_id)
+        if not user:
+            raise HTTPException(404, "Not found")
+
+        return ListOfShortLinkResponse(
+            user_id=user.id,
+            short_links=[
+                ShortLinkResponse(source=item.source, destination=item.destination)
+                for item in user._short_links
+            ],
+        )
+
+
 @router.post("/")
 async def create_short_links(
     short_link_cmd: CreateShortLink, session: AsyncSession = Depends(get_session)
@@ -41,11 +62,11 @@ async def create_short_links(
         short_link = ShortLink(
             source=short_link_cmd.source, destination=short_link_cmd.destination
         )
-        uow.add(short_link)
+
         if not short_link.is_valid():
             raise HTTPException(400, "Bad request for short link creation")
 
-        if user.has_short_link(short_link):
+        if await uow.short_links.get(short_link_cmd.source):
             raise HTTPException(
                 422, f"Duplicate short link with source={short_link.source}"
             )

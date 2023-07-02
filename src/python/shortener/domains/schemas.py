@@ -1,4 +1,6 @@
-from pydantic import AnyUrl
+from typing import List
+
+from pydantic import AnyUrl, Field
 from pydantic.dataclasses import dataclass
 
 
@@ -27,3 +29,15 @@ class CreateUser:
 @dataclass
 class DeleteUser:
     pass
+
+
+@dataclass
+class ShortLinkResponse:
+    source: str
+    destination: AnyUrl
+
+
+@dataclass
+class ListOfShortLinkResponse:
+    user_id: str
+    short_links: List[ShortLinkResponse] = Field(default_factory=list)
