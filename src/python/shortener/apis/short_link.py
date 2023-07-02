@@ -7,20 +7,16 @@ from shortener.domains.schemas import (
     ListOfShortLinkResponse,
     ShortLinkResponse,
 )
-from shortener.services.unit_of_work import CreateUOW, UnitOfWork
-from sqlalchemy.ext.asyncio import AsyncSession
+from shortener.services.unit_of_work import UnitOfWork
 
-from .dependencies import get_session
+from .dependencies import get_uow
 
 router = APIRouter()
 
 
 @router.get("/{user_id}/{id}")
-async def get_short_link(
-    id: str, user_id: str, session: AsyncSession = Depends(get_session)
-):
-    async with CreateUOW(session) as uow:
-        uow: UnitOfWork
+async def get_short_link(id: str, user_id: str, uow: UnitOfWork = Depends(get_uow)):
+    async with uow:
         user: Optional[User] = await uow.short_links.get_user(user_id)
         if not user:
             raise HTTPException(404, "Not found")
@@ -33,8 +29,11 @@ async def get_short_link(
 
 
 @router.get("/{user_id}")
-async def get_short_links(user_id: str, session: AsyncSession = Depends(get_session)):
-    async with CreateUOW(session) as uow:
+async def get_short_links(
+    user_id: str,
+    uow: UnitOfWork = Depends(get_uow),
+):
+    async with uow:
         uow: UnitOfWork
         user: Optional[User] = await uow.short_links.get_user(user_id)
         if not user:
@@ -51,9 +50,10 @@ async def get_short_links(user_id: str, session: AsyncSession = Depends(get_sess
 
 @router.post("/")
 async def create_short_links(
-    short_link_cmd: CreateShortLink, session: AsyncSession = Depends(get_session)
+    short_link_cmd: CreateShortLink,
+    uow: UnitOfWork = Depends(get_uow),
 ):
-    async with CreateUOW(session) as uow:
+    async with uow:
         uow: UnitOfWork
         user: Optional[User] = await uow.short_links.get_user(short_link_cmd.user_id)
         if not user:

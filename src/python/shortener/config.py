@@ -1,13 +1,13 @@
 import json
 from typing import List, Optional, Union
 
-from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, SecretStr, validator
+from pydantic import AnyHttpUrl, AnyUrl, BaseSettings, PostgresDsn, SecretStr, validator
 
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "shortener"
 
-    # POSTGRESQL DEFAULT DATABASE
+    # POSTGRESQL DATABASE
     DATABASE_SCHEME: str = "postgresql+asyncpg"
     DATABASE_HOSTNAME: str = "localhost"
     DATABASE_USER: str = "postgre"
@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     DATABASE_PORT: str = "5432"
     DATABASE_DB: str = "app"
     SQLALCHEMY_DATABASE_URI: str = ""
+
+    # KAFKA PUBLISHER
+    PUBLISHER_DEST_HOST: AnyUrl = "http://localhost:9092"
 
     # CORE SETTINGS
     BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []

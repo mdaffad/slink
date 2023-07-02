@@ -4,9 +4,11 @@ import uvicorn
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from shortener.adapters.orm import start_mappers
+from shortener.adapters.publisher import Publisher
 from shortener.apis import api_router
 from shortener.apis.auth import secure_api_access
 from shortener.config import settings
+from shortener.services.unit_of_work import UnitOfWork
 
 # TODO:
 # 1. Done the auth in fastapi => just use basic auth for server, the user auth
@@ -24,8 +26,16 @@ app = FastAPI(
 
 
 @app.on_event("startup")
-async def bootstrap() -> None:
-    start_mappers()
+async def bootstrap(
+    start_orm: bool = True,
+    uow: UnitOfWork = UnitOfWork(),
+    publisher: Publisher = Publisher(settings.PUBLISHER_DEST_HOST),
+) -> None:
+    if start_orm:
+        start_mappers()
+
+    app.state.uow: UnitOfWork = uow
+    app.state.publisher: Publisher = await publisher.build()
 
 
 app.include_router(
