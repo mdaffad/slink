@@ -8,13 +8,44 @@ services:
   shortener_db:
     image: postgres:13.7
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      POSTGRES_USER: ${POSTGRES_USER:-postgre}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgre}
+      POSTGRES_DB: ${SHORTENER_DB:-app}
+      POSTGRES_USER: ${SHORTENER_DB_USER:-postgre}
+      POSTGRES_PASSWORD: ${SHORTENER_DB_PASSWORD:-postgre}
     ports:
       - "5432:5432"
     volumes:
       - shortener_db_data:/var/lib/postgresql/data
+    
+  sentinel_cache:
+    image: redis:7.0-alpine
+    command:
+      - --requirepass ${SENTINEL_CACHE_PASSWORD:-admin123}
+    ports:
+      - "6379:6379"
 
+  event_store:
+    image: redpanda:v22.1.4-amd64-custom
+    command:
+      - redpanda
+      - start
+      - "--smp"
+      - "4"
+      - "--reserve-memory"
+      - 0M
+      - "--memory"
+      - 4G
+      - "--overprovisioned"
+      - "--node-id"
+      - "0"
+      - "--check=false"
+      - "--kafka-addr"
+      - "PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092"
+      - "--advertise-kafka-addr"
+      - "PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092"
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+
+    
 volumes:
   shortener_db_data:
