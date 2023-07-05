@@ -2,14 +2,15 @@
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
 [GLOBAL]
-pants_version = "2.15.0"
+pants_version = "2.16.0"
 backend_packages = [
-  "pants.backend.build_files.fmt.black",  
+  "pants.backend.build_files.fmt.black",
+  "pants.backend.experimental.go",
   "pants.backend.python",
   "pants.backend.python.lint.black",
   "pants.backend.python.lint.flake8",
   "pants.backend.python.lint.isort",
-  "pants.backend.docker",
+  "pants.backend.docker"
 ]
 
 [anonymous-telemetry]
@@ -19,8 +20,8 @@ enabled = false
 # The Python source root is the repo root. See https://www.pantsbuild.org/docs/source-roots.
 root_patterns = [
   "/src/python",
-  # "/src/go",
-  # "/src/docker",
+  "/src/go",
+  "/src/docker"
 ]
 
 [python]
@@ -37,8 +38,11 @@ interpreter_constraints = ["==3.9.*"]
 # https://www.pantsbuild.org/docs/python-third-party-dependencies. This also adds the
 # `generate-lockfiles` goal for Pants to generate the lockfile for you.
 enable_resolves = true
+default_resolve = "python-default"
 
-resolves = { python-default = "3rdparty/python/python-default.lock"}
+[python.resolves]
+python-default = "3rdparty/python/python-default.lock"
+pytest = "3rdparty/python/pytest.lock"
 
 [python-bootstrap]
 # We search for interpreters both on the $PATH and in the `$(pyenv root)/versions` folder.
@@ -54,14 +58,6 @@ output = "all"
 # verbose option
 args = ["-v"]
 
-# Add plugins
-# Read more on https://www.pantsbuild.org/docs/python-test-goal#pytest-version-and-plugins
-extra_requirements = ["pytest-asyncio"]
-
-# Custom lockfile to use plugin from extra_requirements field
-# Read more on https://www.pantsbuild.org/docs/python-third-party-dependencies#tool-lockfiles
-lockfile = "3rdparty/python/pytest.lock"
-
 [flake8]
 args = [
   "--ignore", "E203,W503,F405",
@@ -73,3 +69,5 @@ args = [
 args = [
   "--profile", "black",
 ]
+
+[golang]
