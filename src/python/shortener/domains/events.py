@@ -14,11 +14,12 @@ class ShortLinkCreated:
 class ShortLinkUpdated:
     source: str
     destination: AnyUrl
+    is_private: bool
 
 
 @dataclass
 class ShortLinkDeleted:
-    pass
+    source: str
 
 
 @dataclass

@@ -14,7 +14,9 @@ class CreateShortLink:
 
 @dataclass
 class UpdateShortLink:
-    pass
+    source: str
+    destination: AnyUrl
+    is_private: bool
 
 
 @dataclass

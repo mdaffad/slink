@@ -3,7 +3,11 @@ from __future__ import annotations
 import json
 
 from aiokafka import AIOKafkaProducer
-from shortener.domains.events import ShortLinkCreated
+from shortener.domains.events import (
+    ShortLinkCreated,
+    ShortLinkDeleted,
+    ShortLinkUpdated,
+)
 
 
 class Publisher:
@@ -23,33 +27,34 @@ class Publisher:
     def serializer(self, value):
         return json.dumps(value).encode()
 
-    def update_cache(self, short_link: ShortLinkCreated) -> None:
+    def update_cache(self, event: ShortLinkUpdated) -> None:
         # TODO: update dest link on cache
         self.producer.send(
             topic="UPDATE-CACHE",
             value={
-                "source": short_link.source,
-                "destination": short_link.destination,
-                "is_private": short_link.is_private,
+                "source": event.source,
+                "destination": event.destination,
+                "is_private": event.is_private,
             },
         )
 
-    async def create_cache(self, short_link: ShortLinkCreated) -> None:
+    async def create_cache(self, event: ShortLinkCreated) -> None:
         await self.producer.send(
             topic="CREATE-CACHE",
             value={
-                "source": short_link.source,
-                "destination": short_link.destination,
-                "is_private": short_link.is_private,
+                "user_id": event.user_id,
+                "source": event.source,
+                "destination": event.destination,
+                "is_private": event.is_private,
             },
         )
 
-    async def invalidate_cache(self, short_link: ShortLinkCreated) -> None:
+    async def invalidate_cache(self, event: ShortLinkDeleted) -> None:
         # TODO: invalidate removed short link on cache
         await self.producer.send(
             topic="INVALIDATE-CACHE",
             value={
-                "source": short_link.source,
+                "source": event.source,
             },
         )
 
