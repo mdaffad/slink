@@ -9,6 +9,7 @@ class CreateShortLink:
     user_id: str
     source: str
     destination: AnyUrl
+    is_private: bool
 
 
 @dataclass

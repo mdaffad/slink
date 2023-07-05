@@ -1,6 +1,9 @@
+import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from shortener.adapters.publisher import Publisher
+from shortener.domains.events import ShortLinkCreated
 from shortener.domains.models import ShortLink, User
 from shortener.domains.schemas import (
     CreateShortLink,
@@ -9,8 +12,9 @@ from shortener.domains.schemas import (
 )
 from shortener.services.unit_of_work import UnitOfWork
 
-from .dependencies import get_uow
+from .dependencies import get_publisher, get_uow
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -52,25 +56,41 @@ async def get_short_links(
 async def create_short_links(
     short_link_cmd: CreateShortLink,
     uow: UnitOfWork = Depends(get_uow),
+    publisher: Publisher = Depends(get_publisher),
 ):
-    async with uow:
-        uow: UnitOfWork
-        user: Optional[User] = await uow.short_links.get_user(short_link_cmd.user_id)
-        if not user:
-            raise HTTPException(404, "Not found")
+    try:
+        async with uow:
+            uow: UnitOfWork
+            user: Optional[User] = await uow.short_links.get_user(
+                short_link_cmd.user_id
+            )
+            if not user:
+                raise HTTPException(404, "Not found")
 
-        short_link = ShortLink(
-            source=short_link_cmd.source, destination=short_link_cmd.destination
-        )
-
-        if not short_link.is_valid():
-            raise HTTPException(400, "Bad request for short link creation")
-
-        if await uow.short_links.get(short_link_cmd.source):
-            raise HTTPException(
-                422, f"Duplicate short link with source={short_link.source}"
+            short_link = ShortLink(
+                source=short_link_cmd.source, destination=short_link_cmd.destination
             )
 
-        user.register_short_link(short_link)
-        await uow.commit()
+            if not short_link.is_valid():
+                raise HTTPException(400, "Bad request for short link creation")
+
+            if await uow.short_links.get(short_link_cmd.source):
+                raise HTTPException(
+                    422, f"Duplicate short link with source={short_link.source}"
+                )
+
+            user.register_short_link(short_link)
+            await uow.commit()
+            await publisher.create_cache(
+                ShortLinkCreated(
+                    user_id=short_link_cmd.user_id,
+                    source=short_link_cmd.source,
+                    destination=short_link_cmd.destination,
+                    is_private=short_link_cmd.is_private,
+                )
+            )
+    except Exception as e:
+        await uow.rollback()
+        logger.error(str(e))
+    else:
         return short_link_cmd

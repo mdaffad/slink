@@ -32,6 +32,9 @@ class UnitOfWork:
     async def commit(self):
         await self.session.commit()
 
+    async def rollback(self):
+        await self.session.rollback()
+
     def add(self, obj: Any):
         self.session.add(obj)
 

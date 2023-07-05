@@ -3,13 +3,12 @@ from __future__ import annotations
 import json
 
 from aiokafka import AIOKafkaProducer
-from pydantic import AnyUrl
-from shortener.domains.models import ShortLink
+from shortener.domains.events import ShortLinkCreated
 
 
 class Publisher:
-    def __init__(self, dest_host: AnyUrl) -> None:
-        self.bootstrap_server: AnyUrl = dest_host
+    def __init__(self, dest_host: str) -> None:
+        self.bootstrap_server: str = dest_host
         self.compression_type = "gzip"
 
     async def build(self) -> Publisher:
@@ -24,7 +23,7 @@ class Publisher:
     def serializer(self, value):
         return json.dumps(value).encode()
 
-    def update_cache(self, short_link: ShortLink) -> None:
+    def update_cache(self, short_link: ShortLinkCreated) -> None:
         # TODO: update dest link on cache
         self.producer.send(
             topic="UPDATE-CACHE",
@@ -35,9 +34,19 @@ class Publisher:
             },
         )
 
-    def invalidate_cache(self, short_link: ShortLink) -> None:
+    async def create_cache(self, short_link: ShortLinkCreated) -> None:
+        await self.producer.send(
+            topic="CREATE-CACHE",
+            value={
+                "source": short_link.source,
+                "destination": short_link.destination,
+                "is_private": short_link.is_private,
+            },
+        )
+
+    async def invalidate_cache(self, short_link: ShortLinkCreated) -> None:
         # TODO: invalidate removed short link on cache
-        self.producer.send(
+        await self.producer.send(
             topic="INVALIDATE-CACHE",
             value={
                 "source": short_link.source,
