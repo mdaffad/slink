@@ -1,8 +1,8 @@
 python_sources(
     name="shortener",
     dependencies=[
-        "3rdparty/python:reqs#psycopg2-binary",
-        "3rdparty/python:reqs#asyncpg",
+        "3rdparty/python:default#psycopg2-binary",
+        "3rdparty/python:default#asyncpg",
     ],
 )
 pex_binary(
@@ -12,6 +12,6 @@ pex_binary(
 )
 
 pex_binary(
-    name="migrate",
+    name="migrate_app",
     entry_point="entrypoints/migrate.py",
 )
