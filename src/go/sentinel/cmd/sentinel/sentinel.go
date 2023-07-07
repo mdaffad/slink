@@ -12,16 +12,36 @@ import (
 var (
 	server      *gin.Engine
 	ctx         context.Context
-	redisclient *redis.Client
+	redisClient *redis.Client
 )
 
 func init() {
 
 	// ? Load the .env variables
-	config, err := configs.LoadConfig(".")
+	config, err := configs.LoadConfig()
 	if err != nil {
 		log.Fatal("Could not load environment variables", err)
 	}
+	println(config.RedisURL)
+	println(config.Port)
+
+	ctx = context.TODO()
+
+	// ? Connect to Redis
+	redisClient = redis.NewClient(&redis.Options{
+		Addr:     config.RedisURL,
+		Password: "admin123",
+	})
+
+	if _, err := redisClient.Ping(ctx).Result(); err != nil {
+		panic(err)
+	}
+
+	if err != nil {
+		panic(err)
+	}
 }
+
 func main() {
+
 }

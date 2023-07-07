@@ -1,26 +1,23 @@
 package configs
 
-import (
-	"github.com/spf13/viper"
-)
+import "os"
 
 type Config struct {
-	RedisUri string `mapstructure:"REDIS_URL"`
-	Port     string `mapstructure:"PORT"`
+	RedisURL string
+	Port     string
 }
 
-func LoadConfig(path string) (config Config, err error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigType("env")
-	viper.SetConfigName("app")
-
-	viper.AutomaticEnv()
-
-	err = viper.ReadInConfig()
-	if err != nil {
-		return
+func LoadConfig() (config Config, err error) {
+	ok := false
+	config.RedisURL, ok = os.LookupEnv("REDIS_URL")
+	if !ok {
+		config.RedisURL = "localhost:6379"
 	}
 
-	err = viper.Unmarshal(&config)
+	config.Port, ok = os.LookupEnv("PORT")
+	if !ok {
+		config.Port = "8888"
+	}
+
 	return
 }
